@@ -11,10 +11,8 @@ packages:
 services:
   - nginx
 
-nginxconfig:
-  - src: nginx.conf.template
-  - dest: /etc/nginx/nginx.conf
-
+nginxconfig-src: nginx.conf.template
+nginxconfig-dest: /etc/nginx/nginx.conf
 
 repourl: https://github.com/mzeier/pinocchio-web.git
 webroot: /usr/share/nginx/html
