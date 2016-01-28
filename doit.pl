@@ -52,7 +52,7 @@ sub do_clonewebroot {
 
 sub do_start_services {
 	# cheat a little here, stop service, start service
-	# - ideally it's be more like Ansible's state=restarted 
+	# - ideally it's be more like Ansible's state=restarted
 	print $fh "service $_ stop\n";
 	print $fh "service $_ start\n";
 	say "  [] [START] service $_ stop/start" if $verbose;
@@ -127,12 +127,11 @@ close $fh;
 
 # scp $outFile to each dest host
 
+
 # rsync nginx configs
 # update nginx config files
 # - To-do: templated config files
 # - To-do: allow for more than one statically configured config files
-#do_copy_configs(@config->nginxconfig);
-#do_copy_configs($config->{webroot}, $config->{repourl});
-
+do_copy_configs($config->{nginxconfig-src}, $config->{nginxconfig-dest});
 
 # ssh & exec $outFile on each dest host
