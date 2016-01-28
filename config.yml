@@ -1,0 +1,14 @@
+---
+hosts:
+  - 50.16.88.200
+  - 54.147.243.124
+
+packages:
+  - nginx
+  - php
+  - git
+
+services:
+  - nginx
+
+repourl: https://github.com/mzeier/pinocchio-web.git
