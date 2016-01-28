@@ -12,3 +12,4 @@ services:
   - nginx
 
 repourl: https://github.com/mzeier/pinocchio-web.git
+webroot: /usr/share/nginx/www
