@@ -4,6 +4,11 @@
 #  - reads in YAML config file
 #  - expects to install packages, update webroot, install configs, start services
 #
+# To-do:
+# - only push config files if necessary (md5sum src/dest files?)
+# - templated files, especially nginx configs
+# - no error handling - assumes specific input YAML, changes here will likely break all the things
+
 
 use strict;
 use warnings;
@@ -16,12 +21,12 @@ use Net::OpenSSH;
 
 use File::Temp;
 
+# be lazy & treat these as globally scoped variables.
 use vars qw( $outFile $fh $verbose);
 
 sub do_install_packages {
 	# apt-get packages.
 	# - To-do: perhaps concatinate all packages to a single line
-
 	print $fh "apt-get -y install $_\n";
 	say "  [] [PACKAGES] apt-get -y install $_" if $verbose;
 }
@@ -30,7 +35,6 @@ sub do_clonewebroot {
 	# do a local git clone/git pull to update web content
 	my ($webroot, $repourl) = @_;
 
-	say "  [] [CLONE WEBROOT] cd $webroot" if $verbose;
 	say "  [] [CLONE WEBROOT] git clone/pull $repourl" if $verbose;
 
 	# catch when this is a fresh host & clone repourl
@@ -39,7 +43,7 @@ sub do_clonewebroot {
 	print $fh " git clone $repourl\n";
 	print $fh "fi\n";
 
-	# To-do:
+	# To-do: better way to do this?
 	print $fh "cd $webroot/pinocchio-web\n";
 	print $fh "git pull\n";
 	print $fh "\n";
@@ -48,7 +52,7 @@ sub do_clonewebroot {
 
 sub do_start_services {
 	# cheat a little here, stop service, start service
-	# - ideally it's be more like Ansible's state=restarted *if* needed
+	# - ideally it's be more like Ansible's state=restarted 
 	print $fh "service $_ stop\n";
 	print $fh "service $_ start\n";
 	say "  [] [START] service $_ stop/start" if $verbose;
@@ -112,11 +116,6 @@ for (@{$config->{packages}}) {
 say " [VERBOSE] Calling: clonewebroot with: $config->{webroot}, $config->{repourl} ";
 do_clonewebroot($config->{webroot}, $config->{repourl});
 
-# update nginx config files
-# - To-do: templated config files
-# - To-do: allow for more than one statically configured config files
-#do_copy_configs(@config->nginxconfig);
-#do_copy_configs($config->{webroot}, $config->{repourl});
 
 # start/restart services
 for (@{$config->{services}}) {
@@ -125,3 +124,15 @@ for (@{$config->{services}}) {
 
 # close our file.
 close $fh;
+
+# scp $outFile to each dest host
+
+# rsync nginx configs
+# update nginx config files
+# - To-do: templated config files
+# - To-do: allow for more than one statically configured config files
+#do_copy_configs(@config->nginxconfig);
+#do_copy_configs($config->{webroot}, $config->{repourl});
+
+
+# ssh & exec $outFile on each dest host
