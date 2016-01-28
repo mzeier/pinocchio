@@ -31,9 +31,18 @@ sub do_clonewebroot {
 	my ($webroot, $repourl) = @_;
 
 	say "  [] [CLONE WEBROOT] cd $webroot" if $verbose;
-	print $fh "cd $webroot\n";
-	say "  [] [CLONE WEBROOT] git clone $repourl" if $verbose;
-	print $fh "git clone $repourl\n";
+	say "  [] [CLONE WEBROOT] git clone/pull $repourl" if $verbose;
+
+	# catch when this is a fresh host & clone repourl
+	print $fh "\nif [ ! -d \"$webroot/pinocchio-web\" ]; then\n";
+	print $fh " cd $webroot\n";
+	print $fh " git clone $repourl\n";
+	print $fh "fi\n";
+
+	# To-do:
+	print $fh "cd $webroot/pinocchio-web\n";
+	print $fh "git pull\n";
+	print $fh "\n";
 
 }
 
@@ -88,6 +97,11 @@ say " [VERBOSE] Writing output script => $outFile" if $verbose;
 
 # open a filehandle for writing
 $fh = IO::File->new("$outFile", 'w') or die "Failed to create $outFile: $!";
+
+# init the script
+print $fh "#!/bin/bash\n\n";
+print $fh "export DEBIAN_FRONTEND=noninteractive\n";
+
 
 # install packages
 for (@{$config->{packages}}) {
