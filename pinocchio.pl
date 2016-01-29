@@ -69,9 +69,9 @@ sub get_temp_filename {
 	return $tmpfh->filename;
 }
 
-###
+###########################
 # main
-###
+###########################
 
 # setup some default variables
 my $configFile = "config.yml";
@@ -124,9 +124,9 @@ close $fh;
 # In this for-loop, we do the following:
 # - open ssh to remote hosts
 # - scp config files
-# - scp $outFile /tmp/$outFile
-# - exec /tmp/$outFile
-#
+# - scp $outFile remote:$outFile
+# - exec $outFile
+# - rm $outFile
 for (@{$config->{hosts}}) {
 	my $ssh = Net::OpenSSH->new(
 		$_,
@@ -150,18 +150,10 @@ for (@{$config->{hosts}}) {
 		#my @results = $ssh->capture2('/bin/bash $outFile') or die "command filed: " . $ssh->error . "\n";
 		say "@results" if $verbose;
 
+		# cleanup after ourselves but for this coding exercise, leave the files on disk for inspection
+		#@results = $ssh->capture2("/bin/rm $outFile") or die "command filed: " . $ssh->error . "\n";
+
 }
 
-# scp $outFile to each dest host
-
-
-# rsync nginx configs
-# update nginx config files
-# - To-do: templated config files
-# - To-do: allow for more than one statically configured config files
-#do_copy_configs($config->{nginxconfig-src}, $config->{nginxconfig-dest});
-#   $ssh->scp_get({glob => 1}, '/var/tmp/foo*', '/var/tmp/bar*', '/tmp');
-# $ssh->rsync_put(\%opts, $local1, $local2,..., $remote_dir_or_file)
-
-
-# ssh & exec $outFile on each dest host
+# cleanup after ourselves but for this coding exercise, leave the files on disk for inspection
+#unlink($outFile) or warn "Could not unlink $file: $!";
