@@ -5,14 +5,16 @@ hosts:
 
 packages:
   - nginx
-  - php
+  - php5-fpm
   - git
 
 services:
+  - php5-fpm
   - nginx
 
-nginxconfig-src: nginx.conf.template
-nginxconfig-dest: /etc/nginx/nginx.conf
+
+nginxconfigsrc: nginx.conf.template
+nginxconfigdest: /etc/nginx/sites-enabled/default
 
 repourl: https://github.com/mzeier/pinocchio-web.git
 webroot: /usr/share/nginx/html

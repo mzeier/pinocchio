@@ -69,12 +69,6 @@ sub get_temp_filename {
 	return $tmpfh->filename;
 }
 
-sub do_copy_configs {
-	# scp file
-	my ($src, $dest) = @_;
-
-}
-
 ###
 # main
 ###
@@ -88,9 +82,9 @@ $verbose = 0;
 # pull in command line args
 GetOptions (
 	"verbose"	=> \$verbose,
-	"config"	=> \$configFile,
-	"password"	=> \$ssh_pass,
-	"username"	=> \$ssh_user,
+	"config=s"	=> \$configFile,
+	"password=s"	=> \$ssh_pass,
+	"username=s"	=> \$ssh_user,
 ) or die ("Error in command line arguments\n");
 
 
@@ -118,12 +112,45 @@ do_clonewebroot($config->{webroot}, $config->{repourl});
 
 
 # start/restart services
+say " [VERBOSE] Calling: stop/start services ";
 for (@{$config->{services}}) {
 	do_start_services($_);
 }
 
 # close our file.
 close $fh;
+
+#
+# In this for-loop, we do the following:
+# - open ssh to remote hosts
+# - scp config files
+# - scp $outFile /tmp/$outFile
+# - exec /tmp/$outFile
+#
+for (@{$config->{hosts}}) {
+	my $ssh = Net::OpenSSH->new(
+		$_,
+		user => $ssh_user,
+		password => $ssh_pass,
+		timeout => 60,
+		master_opts => [-o => "StrictHostKeyChecking=no"]);
+
+		$ssh->error and die "Unable to connect to remote host: " . $ssh->error;
+		say "  [] [ssh] Connecting: $ssh_user\@$_" if $verbose;
+
+		say "  [] [ssh] Copying: scp $outFile $ssh_user\@$_:/tmp/" if $verbose;
+		$ssh->scp_put($outFile, "/tmp") or die "scp failed: " . $ssh->error;
+
+		say "  [] [ssh] Copying: scp $config->{nginxconfigsrc} -> $config->{nginxconfigdest}" if $verbose;
+		my @results = $ssh->capture2("/bin/mkdir -p /etc/nginx/sites-enabled/") or die "command filed: " . $ssh->error . "\n";
+		$ssh->scp_put($config->{nginxconfigsrc}, $config->{nginxconfigdest}) or die "scp failed: " . $ssh->error;
+
+		say "  [] [ssh] Exec\'ing $outFile" if $verbose;
+		@results = $ssh->capture2("/bin/bash $outFile") or die "command filed: " . $ssh->error . "\n";
+		#my @results = $ssh->capture2('/bin/bash $outFile') or die "command filed: " . $ssh->error . "\n";
+		say "@results" if $verbose;
+
+}
 
 # scp $outFile to each dest host
 
@@ -132,6 +159,9 @@ close $fh;
 # update nginx config files
 # - To-do: templated config files
 # - To-do: allow for more than one statically configured config files
-do_copy_configs($config->{nginxconfig-src}, $config->{nginxconfig-dest});
+#do_copy_configs($config->{nginxconfig-src}, $config->{nginxconfig-dest});
+#   $ssh->scp_get({glob => 1}, '/var/tmp/foo*', '/var/tmp/bar*', '/tmp');
+# $ssh->rsync_put(\%opts, $local1, $local2,..., $remote_dir_or_file)
+
 
 # ssh & exec $outFile on each dest host
