@@ -63,3 +63,55 @@ git pull
 service nginx stop
 service nginx start
 ~~~
+
+## Validation Output
+
+Testing output:
+
+	mrz@nimba [~/pinocchio/] 75> curl -s http://50.16.88.200/
+	Hello, world!
+	
+	mrz@nimba [~/pinocchio/] 76> curl -s http://54.147.243.124/
+	Hello, world!
+	
+Verbose output:
+
+	mrz@nimba [~/pinocchio/] 77> curl -sv http://54.147.243.124/
+	* About to connect() to 54.147.243.124 port 80 (#0)
+	*   Trying 54.147.243.124...
+	* Connected to 54.147.243.124 (54.147.243.124) port 80 (#0)
+	> GET / HTTP/1.1
+	> User-Agent: curl/7.29.0
+	> Host: 54.147.243.124
+	> Accept: */*
+	>
+	< HTTP/1.1 200 OK
+	< Server: nginx/1.4.6 (Ubuntu)
+	< Date: Fri, 29 Jan 2016 17:59:28 GMT
+	< Content-Type: text/plain
+	< Transfer-Encoding: chunked
+	< Connection: keep-alive
+	< X-Powered-By: PHP/5.5.9-1ubuntu4.14
+	<
+	Hello, world!
+	* Connection #0 to host 54.147.243.124 left intact
+	
+	mrz@nimba [~/pinocchio/] 78> curl -sv http://50.16.88.200/
+	* About to connect() to 50.16.88.200 port 80 (#0)
+	*   Trying 50.16.88.200...
+	* Connected to 50.16.88.200 (50.16.88.200) port 80 (#0)
+	> GET / HTTP/1.1
+	> User-Agent: curl/7.29.0
+	> Host: 50.16.88.200
+	> Accept: */*
+	>
+	< HTTP/1.1 200 OK
+	< Server: nginx/1.4.6 (Ubuntu)
+	< Date: Fri, 29 Jan 2016 17:59:35 GMT
+	< Content-Type: text/plain
+	< Transfer-Encoding: chunked
+	< Connection: keep-alive
+	< X-Powered-By: PHP/5.5.9-1ubuntu4.14
+	<
+	Hello, world!
+	* Connection #0 to host 50.16.88.200 left intact
