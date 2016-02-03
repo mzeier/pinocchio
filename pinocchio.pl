@@ -138,17 +138,35 @@ for (@{$config->{hosts}}) {
 		$ssh->error and die "Unable to connect to remote host: " . $ssh->error;
 		say "  [] [ssh] Connecting: $ssh_user\@$_" if $verbose;
 
-		say "  [] [ssh] Copying: scp $outFile $ssh_user\@$_:/tmp/" if $verbose;
-		$ssh->scp_put($outFile, "/tmp") or die "scp failed: " . $ssh->error;
+		# Preflight. Ideally make this a function but do it inline for now.
+		# - do we have disk space?
+		# -- for now, care only about / and assume we need > 100MB
+		say "  [] [ssh] Preflight check: disk space > 100M" if $verbose;
+		my @preflight = $ssh->capture2("df -m --output=avail /") or die "command filed: " . $ssh->error . "\n";
+		# strip out the 'df' header and newline.
+		$preflight =~ s/Avail\s+//;
+		$preflight =~ s/\n//;
+		if ($preflight < 100) {
+			say "FATAL ERROR: Insufficient disk space: $preflight";
+		} else {
 
-		say "  [] [ssh] Copying: scp $config->{nginxconfigsrc} -> $config->{nginxconfigdest}" if $verbose;
-		my @results = $ssh->capture2("/bin/mkdir -p /etc/nginx/sites-enabled/") or die "command filed: " . $ssh->error . "\n";
-		$ssh->scp_put($config->{nginxconfigsrc}, $config->{nginxconfigdest}) or die "scp failed: " . $ssh->error;
+			say "  [] [ssh] Copying: scp $outFile $ssh_user\@$_:/tmp/" if $verbose;
+			$ssh->scp_put($outFile, "/tmp") or die "scp failed: " . $ssh->error;
 
-		say "  [] [ssh] Exec\'ing $outFile" if $verbose;
-		@results = $ssh->capture2("/bin/bash $outFile") or die "command filed: " . $ssh->error . "\n";
-		#my @results = $ssh->capture2('/bin/bash $outFile') or die "command filed: " . $ssh->error . "\n";
-		say "@results" if $verbose;
+			say "  [] [ssh] Copying: scp $config->{nginxconfigsrc} -> $config->{nginxconfigdest}" if $verbose;
+			my @results = $ssh->capture2("/bin/mkdir -p /etc/nginx/sites-enabled/") or die "command filed: " . $ssh->error . "\n";
+			$ssh->scp_put($config->{nginxconfigsrc}, $config->{nginxconfigdest}) or die "scp failed: " . $ssh->error;
+
+			say "  [] [ssh] Exec\'ing $outFile" if $verbose;
+			@results = $ssh->capture2("/bin/bash $outFile") or die "command filed: " . $ssh->error . "\n";
+			#my @results = $ssh->capture2('/bin/bash $outFile') or die "command filed: " . $ssh->error . "\n";
+			say "@results" if $verbose;
+
+		}
+
+
+
+
 
 		# cleanup after ourselves but for this coding exercise, leave the files on disk for inspection
 		#@results = $ssh->capture2("/bin/rm $outFile") or die "command filed: " . $ssh->error . "\n";
