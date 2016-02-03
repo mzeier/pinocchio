@@ -58,6 +58,15 @@ sub do_start_services {
 	say "  [] [START] service $_ stop/start" if $verbose;
 }
 
+sub do_update_iptables {
+
+	# this begs for a better iptables module. This is quick and dirty for now.
+	# - dirty: iptables willing adds duplicate entries!
+	print $fh "iptables -D INPUT -p tcp --dport 80 -j DROP\n"
+	print $fh "iptables -A INPUT -p tcp --dport 80 -j ACCEPT\n";
+
+}
+
 sub get_temp_filename {
 	# generate temporary filename
 	# - use this to build the shell script that will be copied to the remote host
@@ -106,6 +115,9 @@ for (@{$config->{packages}}) {
 	do_install_packages($_);
 }
 
+# open up iptables
+do_update_iptables();
+
 # update webroot
 say " [VERBOSE] Calling: clonewebroot with: $config->{webroot}, $config->{repourl} ";
 do_clonewebroot($config->{webroot}, $config->{repourl});
@@ -142,7 +154,7 @@ for (@{$config->{hosts}}) {
 		# - do we have disk space?
 		# -- for now, care only about / and assume we need > 100MB
 		say "  [] [ssh] Preflight check: disk space > 100M" if $verbose;
-		my $preflight = $ssh->capture2("df -m --output=avail /") or die "command filed: " . $ssh->error . "\n";
+		my $preflight = $ssh->capture2("df -m --output=avail /") or die "command failed: " . $ssh->error . "\n";
 		# strip out the 'df' header and newline.
 		$preflight =~ s/Avail\s+//;
 		$preflight =~ s/\n//;
@@ -154,13 +166,13 @@ for (@{$config->{hosts}}) {
 			#  a "common" role/set of tasks
 			# - takes some assumptions that 'resolvconf -u' will work
 			say "  [] [resolv.conf] Updating /etc/resolv.conf" if $verbose;
-			my $resolvconf = $ssh->capture2("/sbin/resolvconf -u") or die "command filed: " . $ssh->error . "\n";
+			my $resolvconf = $ssh->capture2("/sbin/resolvconf -u");
 
 			say "  [] [ssh] Copying: scp $outFile $ssh_user\@$_:/tmp/" if $verbose;
 			$ssh->scp_put($outFile, "/tmp") or die "scp failed: " . $ssh->error;
 
 			say "  [] [ssh] Copying: scp $config->{nginxconfigsrc} -> $config->{nginxconfigdest}" if $verbose;
-			my @results = $ssh->capture2("/bin/mkdir -p /etc/nginx/sites-enabled/") or die "command filed: " . $ssh->error . "\n";
+			my @results = $ssh->capture2("/bin/mkdir -p /etc/nginx/sites-enabled/") or die "command failed: " . $ssh->error . "\n";
 			$ssh->scp_put($config->{nginxconfigsrc}, $config->{nginxconfigdest}) or die "scp failed: " . $ssh->error;
 
 			say "  [] [ssh] Exec\'ing $outFile" if $verbose;
