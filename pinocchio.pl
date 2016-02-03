@@ -147,8 +147,14 @@ for (@{$config->{hosts}}) {
 		$preflight =~ s/Avail\s+//;
 		$preflight =~ s/\n//;
 		if ($preflight < 100) {
-			say "FATAL ERROR: Insufficient disk space: $preflight";
+			say "FATAL ERROR: Insufficient disk space: host $_ ($preflight MB free)";
 		} else {
+
+			# force /etc/resolv.conf to be sane - in a better world this would be
+			#  a "common" role/set of tasks
+			# - takes some assumptions that 'resolvconf -u' will work
+			say "  [] [resolv.conf] Updating /etc/resolv.conf" if $verbose;
+			my $resolvconf = $ssh->capture2("/sbin/resolvconf -u") or die "command filed: " . $ssh->error . "\n";
 
 			say "  [] [ssh] Copying: scp $outFile $ssh_user\@$_:/tmp/" if $verbose;
 			$ssh->scp_put($outFile, "/tmp") or die "scp failed: " . $ssh->error;
