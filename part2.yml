@@ -1,0 +1,19 @@
+---
+hosts:
+  - 54.163.184.42
+
+packages:
+  - nginx
+  - php5-fpm
+  - git
+
+services:
+  - php5-fpm
+  - nginx
+
+
+nginxconfigsrc: nginx.conf.template
+nginxconfigdest: /etc/nginx/sites-enabled/default
+
+repourl: https://github.com/mzeier/pinocchio-web.git
+webroot: /usr/share/nginx/html
