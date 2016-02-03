@@ -142,7 +142,7 @@ for (@{$config->{hosts}}) {
 		# - do we have disk space?
 		# -- for now, care only about / and assume we need > 100MB
 		say "  [] [ssh] Preflight check: disk space > 100M" if $verbose;
-		my @preflight = $ssh->capture2("df -m --output=avail /") or die "command filed: " . $ssh->error . "\n";
+		my $preflight = $ssh->capture2("df -m --output=avail /") or die "command filed: " . $ssh->error . "\n";
 		# strip out the 'df' header and newline.
 		$preflight =~ s/Avail\s+//;
 		$preflight =~ s/\n//;
